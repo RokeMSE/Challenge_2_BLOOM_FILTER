@@ -12,13 +12,13 @@ struct UserAccount {
 
     UserAccount(const string& username, const string& password) : username(username), password(password) {}
 
-    const string& getUsername() const {
+/*     const string& getUsername() const {
         return username;
     }
 
     const string& getPassword() const {
         return password;
-    }
+    } */
 };
 
 struct BloomFilter {
