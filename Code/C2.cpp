@@ -110,7 +110,7 @@ void ReadSignUpFile(vector<UserAccount> &accounts, string filename)
     in.close();
 }
 
-int CheckValidAccount(string username, string password, BloomFilter &UserFilter, BloomFilter &PassFilter, BloomFilter &WeakpassFilter, vector<UserAccount> &accounts)
+int CheckValidAccount(string username, string password, BloomFilter &UserFilter, BloomFilter &PassFilter, BloomFilter &WeakpassFilter)
 {
     if (!isValidUsername(username))
         return 1;
@@ -124,9 +124,6 @@ int CheckValidAccount(string username, string password, BloomFilter &UserFilter,
     if (isExisted(password,WeakpassFilter))
         return 4;
 
-    UserFilter.insert(username);
-    PassFilter.insert(password);
-    accounts.push_back(UserAccount(username,password));
     return 0;
 }
 
@@ -136,6 +133,7 @@ void RegisterAccount(BloomFilter &UserFilter, BloomFilter &PassFilter, BloomFilt
     bool stop=0;
     while (!stop)
     {
+        cout << endl;
         cout << "Enter Username: ";
         getline(cin,username);
         cout << "Enter Password: ";
@@ -145,21 +143,25 @@ void RegisterAccount(BloomFilter &UserFilter, BloomFilter &PassFilter, BloomFilt
 
         if (password.compare(pass_again) == 0) 
         {
-            int check = CheckValidAccount(username,password,UserFilter,PassFilter,WeakpassFilter, accounts);
+            int check = CheckValidAccount(username,password,UserFilter,PassFilter,WeakpassFilter);
             if (check == 0)
             {
-                cout << "Register successfully! \n";
+                cout << "\nRegister successfully! \n";
                 stop=1;
+
+                UserFilter.insert(username);
+                PassFilter.insert(password);
+                accounts.push_back(UserAccount(username,password));
                 continue;
             }
             else if (check == 1)
-                cout << "Invalid username. Please try again! \n";
+                cout << "\n*Invalid username. Please try again! \n";
             else if (check == 2)
-                cout << "Username existed. Please try again! \n";
+                cout << "\n*Username existed. Please try again! \n";
             else if (check == 3)
-                cout << "Invalid password. Please try again! \n";
+                cout << "\n*Invalid password. Please try again! \n";
             else if (check == 4)
-                cout << "Password is weak. Please try again! \n";
+                cout << "\n*Password is weak. Please try again! \n";
             cout << endl;
 
             int choice=2;
@@ -190,6 +192,13 @@ void RegisterAccount(BloomFilter &UserFilter, BloomFilter &PassFilter, BloomFilt
 void MultipleRegistration(BloomFilter &UserFilter, BloomFilter &PassFilter, BloomFilter &WeakpassFilter, vector<UserAccount> &accounts)
 {
     ifstream in("SignUp.txt");
+
+    if (in.is_open() == false)
+    {
+        cout << "\n Cannot open file SignUp.txt! Try again! \n";
+        return;
+    }
+
     ofstream outFail("Fail.txt");
     
     string username,password;
@@ -198,9 +207,17 @@ void MultipleRegistration(BloomFilter &UserFilter, BloomFilter &PassFilter, Bloo
         in >> username;
         in >> password;
         
-        if (CheckValidAccount(username,password,UserFilter,PassFilter,WeakpassFilter,accounts))
+        if (CheckValidAccount(username,password,UserFilter,PassFilter,WeakpassFilter))
             outFail << username << " " << password << endl;
+        else
+        {
+            UserFilter.insert(username);
+            PassFilter.insert(password);
+            accounts.push_back(UserAccount(username,password));
+        }
     }
+
+    cout << "\n Muptiple register successfully! \n";
 
     in.close();
     outFail.close();
