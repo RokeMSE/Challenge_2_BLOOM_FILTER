@@ -60,6 +60,7 @@ struct BloomFilter {
 //ACCOUNT MANAGEMENT FUNCTIONS:
 bool isValidUsername(const string& username) {
     return (username.length() > 5 && username.length() < 10 && username.find(' ') == string::npos);
+    //npos help check for even extreme long passwords
 }
 
 bool isValidPassword(const string& username, const string& password, const BloomFilter& BloomFilter) {
@@ -77,7 +78,12 @@ bool isValidPassword(const string& username, const string& password, const Bloom
     return false;
 }
 
-bool isUsernameExists(const string& username) {
+bool isAccountExists(const string& username, const string& password) {
+    bool user = 1, pass = 1;
+/* Write code here
+..................  */
+
+    return user && pass;
 }
 
 void registerAccount(const string& username, const string& password, BloomFilter& BloomFilter) {
@@ -90,6 +96,7 @@ bool login(const string& username, const string& password) {
 }
 
 void changePassword(const string& username, const string& oldPassword, const string& newPassword, BloomFilter& BloomFilter) {
+    
 }
 
 void readWeakPasswordsFromFile(BloomFilter& BloomFilter, const string& filename) {
@@ -103,7 +110,10 @@ void readWeakPasswordsFromFile(BloomFilter& BloomFilter, const string& filename)
 
 int main() {
     BloomFilter BloomFilter;
-    readWeakPasswordsFromFile(BloomFilter, "WeakPass.txt");
+    string weak_pass = "WeakPass.txt"; //Read only
+    readWeakPasswordsFromFile(BloomFilter, weak_pass);
+    string sign_up = "SignUp.txt"; //Write and read
+    string fail = "Fail.txt"; //Write only
 
     // Prompt the user for actions
     int option;
@@ -118,12 +128,19 @@ int main() {
 
         switch (option) {
             case 1: {
-                string username, password;
-                cout << "Enter desired Username: ";
+                AGAIN1:
+                string username, pass, pass_again;
+                cout << "Enter Username: ";
                 cin >> username;
                 cout << "Enter Password: ";
-                cin >> password;
-                registerAccount(username, password, BloomFilter);
+                cin >> pass;
+                cout << "Reconfirm Password: ";
+                cin >> pass_again;
+                if (pass.compare(pass_again) == 0) registerAccount(username, pass_again, BloomFilter);
+                else {
+                    cout << "Passsword does not match. Please enter again!\n.";
+                    goto AGAIN1;
+                }
                 break;
             }
             case 2: {
@@ -140,18 +157,26 @@ int main() {
                 break;
             }
             case 4: {
-                string username, oldPassword, newPassword;
+                string username, oldPassword, newPass, newPass_again;
                 cout << "Enter Username: ";
                 cin >> username;
                 cout << "Enter old Password: ";
                 cin >> oldPassword;
+                isAccountExists(username, oldPassword);
+                AGAIN4:
                 cout << "Enter new Password: ";
-                cin >> newPassword;
-                changePassword(username, oldPassword, newPassword, BloomFilter);
+                cin >> newPass;
+                cout << "Reconfirm Password: ";
+                cin >> newPass_again;
+                if (newPass.compare(newPass_again) == 0) changePassword(username, oldPassword, newPass_again, BloomFilter);
+                else {
+                    cout << "Passsword does not match. Please enter again!\n.";
+                    goto AGAIN4;
+                }
                 break;
             }
             case 0:
-                cout << "Exiting...\n";
+                cout << "-----------------LOGGING OFF----------------\n";
                 break;
             default:
                 cout << "Invalid option. Please try again.\n";
