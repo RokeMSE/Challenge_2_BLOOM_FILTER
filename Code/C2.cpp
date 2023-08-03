@@ -68,24 +68,11 @@ struct BloomFilter {
         }
     }
 
-    bool contains(const std::string& key) {
-        for (int i = 0; i < hashCount; ++i) {
-            unsigned long long primaryHash = hashFunction(key, i) % size;
-            if (!primaryFilter[primaryHash])
-                return 0;
-        }
-        for (int i = 0; i < hashCount; ++i) {
-            unsigned long long secondaryHash = hashFunction(key, i) % (2 * size);
-            if (!secondaryFilter[secondaryHash])
-                return 0;
-        }
-        return 1;
-    }
-
     unsigned long long hashFunction(const std::string& key, int i) {
         unsigned long long hash = 0;
         for (int j = 0; j < key.length(); ++j) {
-            hash = (hash + (key[j] - 'a' + 1)) * (i + 1);
+            // hash = (hash + (key[j] - 'a' + 1)) * (i + 1);
+            hash = (hash + (int(key[j]) + 1)) * (i + 1);
         }
         return hash;
     }
@@ -97,9 +84,12 @@ bool IsExisted(string key, BloomFilter Typefilter)
     for (int i=0; i<Typefilter.hashCount; i++)
     {
         unsigned long long tmp = Typefilter.hashFunction(key,i);
-        if (Typefilter.primaryFilter[tmp] == 0)
+        unsigned long long tmp1 = tmp % (Typefilter.size),
+                           tmp2 = tmp % (Typefilter.size * 2);
+
+        if (Typefilter.primaryFilter[tmp1] == 0)
             return 0;
-        if (Typefilter.secondaryFilter[tmp] == 0)
+        if (Typefilter.secondaryFilter[tmp2] == 0)
             return 0; //Cross-checking requires both primary and secondary filters to be called and checked
     }
     return 1;
@@ -111,7 +101,7 @@ bool IsValidUsername(const string& username) {
 }
 
 bool IsWeakPassword(const string& password, BloomFilter& WeakpassFilter) {
-    return WeakpassFilter.contains(password);
+    return IsExisted(password, WeakpassFilter);
 }
 
 bool IsValidPassword(const string& username, const string& password, BloomFilter& WeakpassFilter) {
@@ -167,10 +157,11 @@ int CheckValidAccount(string username, string password, BloomFilter &UserFilter,
         return 2;
 
     if (!IsValidPassword(username,password,WeakpassFilter))
+    {
+        if (IsExisted(password,WeakpassFilter))
+            return 4;
         return 3;
-    
-    if (IsExisted(password,WeakpassFilter))
-        return 4;
+    }
 
     return 0;
 }
@@ -181,7 +172,7 @@ void RegisterAccount(BloomFilter &UserFilter, BloomFilter &PassFilter, BloomFilt
     bool stop=0;
     while (!stop)
     {
-        cout << endl;
+        cout << "\t REGISTRATION FUNCTION \n";
         cout << "Enter Username: ";
         getline(cin,username);
         cout << "Enter Password: ";
@@ -194,7 +185,7 @@ void RegisterAccount(BloomFilter &UserFilter, BloomFilter &PassFilter, BloomFilt
             int check = CheckValidAccount(username,password,UserFilter,PassFilter,WeakpassFilter);
             if (check == 0)
             {
-                cout << "\nRegister successfully! \n";
+                cout << "\n*Register successfully! \n";
                 stop=1;
 
                 UserFilter.insert(username);
@@ -212,12 +203,12 @@ void RegisterAccount(BloomFilter &UserFilter, BloomFilter &PassFilter, BloomFilt
                 cout << "\n*Password is weak. Please try again! \n";
             cout << endl;
 
-            int choice=2;
+            int choice=1;
 
             while (choice)
             {
                 cout << "1. Back to menu. \n";
-                cout << "2. Enter again. \n";
+                cout << "2. Register again. \n";
                 cout << "=> Choice: ";
                 cin >> choice;
                 cin.ignore();
@@ -229,11 +220,12 @@ void RegisterAccount(BloomFilter &UserFilter, BloomFilter &PassFilter, BloomFilt
                 else if (choice == 2)
                     choice=0;
                 else
-                    cout << "Invalid Choice! \n";
+                    cout << "\n*Invalid Choice! \n";
+                cout << endl;
             }
         }
         else 
-            cout << "Passsword does not match. Please try again!\n";
+            cout << "\n*Passsword does not match. Please try again!\n";
     }
 }
 
@@ -243,7 +235,7 @@ void MultipleRegistration(BloomFilter &UserFilter, BloomFilter &PassFilter, Bloo
 
     if (in.is_open() == 0)
     {
-        cout << "\n Cannot open file SignUp.txt! Try again! \n";
+        cout << "\n*Cannot open file SignUp.txt! Try again! \n";
         return;
     }
 
@@ -265,64 +257,143 @@ void MultipleRegistration(BloomFilter &UserFilter, BloomFilter &PassFilter, Bloo
         }
     }
 
-    cout << "\n Muptiple register successfully! \n";
+    cout << "*Muptiple register successfully! \n";
 
     in.close();
     outFail.close();
 }
 
-bool Login(BloomFilter &UserFilter, BloomFilter &PassFilter, vector<UserAccount> accounts) {
+void Login(BloomFilter &UserFilter, BloomFilter &PassFilter, vector<UserAccount> accounts) {
     string username, password;
+    bool stop=0;
 
-    cout << "Enter Username: ";
-    getline(cin,username);
-    cout << "Enter Password: ";
-    getline(cin,password);
+    while (stop == 0)
+    {
+        cout << "\t LOG IN FUNCTION \n";
+        cout << "Enter Username: ";
+        getline(cin,username);
+        cout << "Enter Password: ";
+        getline(cin,password);
 
-    /*
-        Check account thư mũ đen
-    */
+        if (IsExisted(username,UserFilter))
+        {
+            long long i, numaccount = accounts.size();
+            for (i = 0; i < numaccount; i++)
+            {
+                if (accounts[i].getUsername() == username)
+                {
+                    if (accounts[i].getPassword() == password)
+                    {
+                        cout << "\n*Log in successfully! \n";
+                        return;
+                    }
+                    else
+                    {
+                        cout << "\n*Wrong password! \n";
+                        break;
+                    }
+                }
+            }
+            if (i == numaccount)
+                cout << "\n*User does not exist! \n";
+        }
+        else
+            cout << "\n*User does not exist! \n";
 
+        int choice=1;
+
+        while (choice)
+        {
+            cout << endl;
+            cout << "1. Back to menu. \n";
+            cout << "2. Log in again. \n";
+            cout << "=> Choice: ";
+            cin >> choice;
+            cin.ignore();
+            if (choice == 1)
+            {
+                choice=0;
+                stop=1;
+            }
+            else if (choice == 2)
+                choice=0;
+            else
+                cout << "\n*Invalid Choice! \n";
+            cout << endl;
+        }
+    }
 }
 
 void ChangePassword(BloomFilter &UserFilter, BloomFilter &PassFilter, BloomFilter &WeakpassFilter, vector<UserAccount>& account) {
-    int choice;
     string username, oldPass, newPass, newPass_again;
-    cout << "Enter Username: ";
-    getline(cin,username);
-    cout << "Enter old Password: ";
-    getline(cin,oldPass);
-    cout << "Enter new Password: ";
-    getline(cin,newPass);
-    cout << "Reconfirm Password: ";
-    getline(cin,newPass_again);
-    if (newPass.compare(newPass_again) != 0) {
-        cout << "Password does not match! \n";
-        return;
-    }
-    
-    if (IsExisted(username,UserFilter) == 0) cout << "User does not exist! \n";
-    else {
-        for (int i=0; i < account.size(); i++) {
-            if (account[i].getUsername() == username) {
-                if (account[i].getPassword() == oldPass) {
-                    if (IsValidPassword(username,newPass,WeakpassFilter) == 0) {
-                        account[i].password = newPass;
-                        PassFilter.insert(newPass);
-                        cout << "Changed password successfully! \n";
+    bool stop=0;
+
+    while (stop == 0)
+    {
+        cout << "\t CHANGE PASSWORD FUNCTION \n";
+        cout << "Enter Username: ";
+        getline(cin,username);
+        cout << "Enter old Password: ";
+        getline(cin,oldPass);
+        cout << "Enter new Password: ";
+        getline(cin,newPass);
+        cout << "Reconfirm new Password: ";
+        getline(cin,newPass_again);
+        if (newPass.compare(newPass_again) != 0) {
+            cout << "\n*Password does not match! \n";
+            return;
+        }
+        
+        if (IsExisted(username,UserFilter) == 0) cout << "\n*User does not exist! \n";
+        else {
+            long long i, numaccount = account.size();
+            for (i=0; i < numaccount; i++) {
+                if (account[i].getUsername() == username) {
+                    if (account[i].getPassword() == oldPass) {
+                        if (IsValidPassword(username,newPass,WeakpassFilter) == 1) {
+                            account[i].password = newPass;
+                            PassFilter.insert(newPass);
+                            cout << "\n*Changed password successfully! \n";
+                            stop=1;
+                            return;
+                        }
+                        else {
+                            cout << "\n*Invalid password! \n";
+                            break;
+                        }
+                            
                     }
-                    else
-                        cout << "Invalid password! \n";
-                        return;
-                }
-                else {
-                    cout << "Wrong password! \n";
-                    return;
+                    else {
+                        cout << "\n*Wrong password! \n";
+                        break;
+                    }
                 }
             }
+            if (i == numaccount)
+                cout << "\n*User does not exist! \n";
+        }
+        int choice=1;
+
+        while (choice)
+        {
+            cout << endl;
+            cout << "1. Back to menu. \n";
+            cout << "2. Change password again. \n";
+            cout << "=> Choice: ";
+            cin >> choice;
+            cin.ignore();
+            if (choice == 1)
+            {
+                choice=0;
+                stop=1;
+            }
+            else if (choice == 2)
+                choice=0;
+            else
+                cout << "\n*Invalid Choice! \n";
+            cout << endl;
         }
     }
-    return;
 }
 
 int main() {
@@ -335,9 +406,11 @@ int main() {
     ReadWeakPasswordsFromFile(WeakpassFilter, "WeakPass.txt");
 
     // Prompt the user for actions
+    cout << endl;
     int option=-1;
     do {
-        cout << "Choose an option:\n";
+        cout << "\t ACCOUNT MANAGEMENT PROGRAM \n";
+        cout << "*Choose an option:\n";
         cout << "1. Registration\n";
         cout << "2. Multiple registrations\n";
         cout << "3. Log-in\n";
@@ -347,6 +420,7 @@ int main() {
         cin >> option;
         cin.ignore();
 
+        cout << endl;
         switch (option) {
             case 1: {
                 RegisterAccount(UserFilter,PassFilter,WeakpassFilter,accounts);
@@ -373,7 +447,6 @@ int main() {
 
         }
         cout << endl;
-
     } while (option != 0);
 
 
