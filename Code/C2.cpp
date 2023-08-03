@@ -12,22 +12,21 @@ struct UserAccount {
 
     UserAccount(const string& username, const string& password) : username(username), password(password) {}
 
-/*     const string& getUsername() const {
+    const string& getUsername() const {
         return username;
     }
 
     const string& getPassword() const {
         return password;
-    } */
+    } 
 };
 
 struct BloomFilter {
     vector<bool> filter;
-    int size;
+    unsigned long long size;
     int hashCount;
 
     BloomFilter() : size(1e9 + 7), hashCount(3) {
-        // filter.resize(size);
         filter = vector<bool> (size,0);
     }
 
@@ -57,7 +56,6 @@ struct BloomFilter {
     }    
 };
 
-
 //ACCOUNT MANAGEMENT FUNCTIONS:
 bool isValidUsername(const string& username) {
     return (username.length() > 5 && username.length() < 10 && username.find(' ') == string::npos);
@@ -82,7 +80,7 @@ bool isValidPassword(const string& username, const string& password, const Bloom
 bool isAccountExists(const string& username, const string& password) {
     bool user = 1, pass = 1;
 /* Write code here
-..................  */
+.................. */
 
     return user && pass;
 }
@@ -96,8 +94,26 @@ void readSignUpFile(BloomFilter& BloomFilter) {
 bool login(const string& username, const string& password) {
 }
 
-void changePassword(const string& username, const string& oldPassword, const string& newPassword, BloomFilter& BloomFilter) {
-    
+void changePassword(const string& username, const string& oldPassword, const string& newPassword, 
+                    BloomFilter& BloomFilter, vector<UserAccount>& account) {
+    if (!isValidUsername(username)) {
+        cout << "Account does not exist.\n";
+        return;
+    }
+
+    for (int i = 0; i < account.size(); ++i) {
+        if (account[i].getUsername() == username && account[i].getPassword() == oldPassword) {
+            if (isValidPassword(username, newPassword, BloomFilter)) {
+                account[i] = UserAccount(username, newPassword);
+                BloomFilter.insert(newPassword);
+                cout << "Password changed successfully!\n";
+            } else {
+                cout << "Invalid new password. Please try again.\n";
+            }
+            return;
+        }
+    }
+    cout << "Invalid username or old password. Please try again.\n";
 }
 
 void readWeakPasswordsFromFile(BloomFilter& BloomFilter, const string& filename) {
@@ -110,6 +126,8 @@ void readWeakPasswordsFromFile(BloomFilter& BloomFilter, const string& filename)
 
 
 int main() {
+    // USE BLOOM FILTER TO CHECK WEAK PASSWORDS
+    vector<UserAccount> accounts;
     BloomFilter BloomFilter;
     string weak_pass = "WeakPass.txt"; //Read only
     readWeakPasswordsFromFile(BloomFilter, weak_pass);
@@ -170,7 +188,7 @@ int main() {
                 cin >> newPass;
                 cout << "Reconfirm Password: ";
                 cin >> newPass_again;
-                if (newPass.compare(newPass_again) == 0) changePassword(username, oldPassword, newPass_again, BloomFilter);
+                if (newPass.compare(newPass_again) == 0) changePassword(username, oldPassword, newPass_again, BloomFilter, accounts);
                 else {
                     cout << "Passsword does not match. Please enter again!\n.";
                     goto AGAIN4;
