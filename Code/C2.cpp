@@ -26,8 +26,9 @@ struct BloomFilter {
     int size;
     int hashCount;
 
-    BloomFilter() : size(1000000), hashCount(3) {
-        filter.resize(size);
+    BloomFilter() : size(1e9 + 7), hashCount(3) {
+        // filter.resize(size);
+        filter = vector<bool> (size,0);
     }
 
     void insert(const string& password) {
@@ -124,6 +125,7 @@ int main() {
         cout << "3. Log-in\n";
         cout << "4. Change Password\n";
         cout << "0. Exit\n";
+        cout << "=> Option: "; 
         cin >> option;
 
         switch (option) {
