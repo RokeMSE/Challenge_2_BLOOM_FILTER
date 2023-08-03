@@ -285,7 +285,7 @@ bool Login(BloomFilter &UserFilter, BloomFilter &PassFilter, vector<UserAccount>
 
 }
 
-void ChangePassword(BloomFilter& BloomFilter, vector<UserAccount>& account) {
+void ChangePassword(BloomFilter &UserFilter, BloomFilter &PassFilter, BloomFilter &WeakpassFilter, vector<UserAccount>& account) {
     int choice;
     string username, oldPass, newPass, newPass_again;
     cout << "Enter Username: ";
@@ -301,14 +301,14 @@ void ChangePassword(BloomFilter& BloomFilter, vector<UserAccount>& account) {
         return;
     }
     
-    if (IsExisted(username,BloomFilter) == 0) cout << "User does not exist! \n";
+    if (IsExisted(username,UserFilter) == 0) cout << "User does not exist! \n";
     else {
         for (int i=0; i < account.size(); i++) {
             if (account[i].getUsername() == username) {
                 if (account[i].getPassword() == oldPass) {
-                    if (IsValidPassword(username,newPass,BloomFilter) == 0) {
+                    if (IsValidPassword(username,newPass,WeakpassFilter) == 0) {
                         account[i].password = newPass;
-                        BloomFilter.insert(newPass);
+                        PassFilter.insert(newPass);
                         cout << "Changed password successfully! \n";
                     }
                     else
@@ -361,7 +361,7 @@ int main() {
                 break;
             }
             case 4: {
-                ChangePassword(WeakpassFilter, accounts);
+                ChangePassword(UserFilter,PassFilter,WeakpassFilter,accounts);
                 break;
             }
             case 0:
